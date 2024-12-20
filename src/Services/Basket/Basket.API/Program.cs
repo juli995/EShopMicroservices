@@ -1,4 +1,5 @@
 using Basket.API.Data;
+using Discount.Grpc;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Weasel.Core;
@@ -48,6 +49,18 @@ builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString)
     .AddRedis(redisConnectionString);
+
+builder.Services.AddGrpcClient<DiscountProtoService.DiscountProtoServiceClient>(options =>
+{
+    var discountUri = builder.Configuration["GrpcSettings:DiscountUrl"];
+
+    if (string.IsNullOrWhiteSpace(discountUri))
+    {
+        throw new Exception("No discount uri set in the configuration");
+    }
+    
+    options.Address = new Uri(discountUri);
+});
 
 var app = builder.Build();
 
